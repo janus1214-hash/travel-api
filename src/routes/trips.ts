@@ -74,4 +74,32 @@ router.get('/:id', authMiddleware, async (req: any, res: Response) => {
   }
 });
 
+router.post('/:id/invite', authMiddleware, async (req: any, res: Response) => {
+  try {
+    const { email } = req.body;
+    const tripId = req.params.id;
+
+    const member = await prisma.tripMember.findFirst({
+      where: { tripId, userId: req.userId },
+    });
+    if (!member) return res.status(403).json({ error: '你不是此行程的成員' });
+
+    const invitee = await prisma.user.findUnique({ where: { email } });
+    if (!invitee) return res.status(404).json({ error: '找不到此 Email 的使用者' });
+
+    const existing = await prisma.tripMember.findUnique({
+      where: { tripId_userId: { tripId, userId: invitee.id } },
+    });
+    if (existing) return res.status(400).json({ error: '該使用者已是成員' });
+
+    await prisma.tripMember.create({
+      data: { tripId, userId: invitee.id, role: 'member' },
+    });
+
+    res.json({ message: '邀請成功' });
+  } catch {
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+});
+
 export default router;
