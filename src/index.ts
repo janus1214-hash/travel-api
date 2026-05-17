@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import tripRoutes from './routes/trips';
 import expenseRoutes from './routes/expenses';
+import pollRoutes from './routes/polls';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/polls', pollRoutes);
 
 app.listen(PORT, () => {
   console.log(`伺服器啟動於 http://localhost:${PORT}`);
