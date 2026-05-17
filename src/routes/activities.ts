@@ -18,15 +18,12 @@ const authMiddleware = (req: any, res: Response, next: any) => {
   }
 };
 
-// 取得行程所有天數和活動
 router.get('/:tripId', authMiddleware, async (req: any, res: Response) => {
   try {
     const days = await prisma.tripDay.findMany({
       where: { tripId: req.params.tripId },
       include: {
-        activities: {
-          orderBy: { sortOrder: 'asc' },
-        },
+        activities: { orderBy: { sortOrder: 'asc' } },
       },
       orderBy: { dayNumber: 'asc' },
     });
@@ -36,28 +33,48 @@ router.get('/:tripId', authMiddleware, async (req: any, res: Response) => {
   }
 });
 
-// 建立天數
 router.post('/:tripId/days', authMiddleware, async (req: any, res: Response) => {
   try {
     const { dayNumber, date, note } = req.body;
-    const tripId = req.params.tripId;
-
     const day = await prisma.tripDay.create({
-      data: { tripId, dayNumber, date, note },
+      data: { tripId: req.params.tripId, dayNumber, date, note },
       include: { activities: true },
     });
-
     res.json(day);
   } catch {
     res.status(500).json({ error: '伺服器錯誤' });
   }
 });
 
-// 新增活動
+router.patch('/days/:dayId', authMiddleware, async (req: any, res: Response) => {
+  try {
+    const { date, note } = req.body;
+    const day = await prisma.tripDay.update({
+      where: { id: req.params.dayId },
+      data: {
+        ...(date && { date }),
+        note: note ?? undefined,
+      },
+      include: { activities: true },
+    });
+    res.json(day);
+  } catch {
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+});
+
+router.delete('/days/:dayId', authMiddleware, async (req: any, res: Response) => {
+  try {
+    await prisma.tripDay.delete({ where: { id: req.params.dayId } });
+    res.json({ message: '已刪除' });
+  } catch {
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+});
+
 router.post('/days/:dayId/activities', authMiddleware, async (req: any, res: Response) => {
   try {
     const { title, location, startTime, note } = req.body;
-
     if (!title) return res.status(400).json({ error: '請填寫活動名稱' });
 
     const count = await prisma.activity.count({
@@ -74,14 +91,30 @@ router.post('/days/:dayId/activities', authMiddleware, async (req: any, res: Res
         sortOrder: count,
       },
     });
-
     res.json(activity);
   } catch {
     res.status(500).json({ error: '伺服器錯誤' });
   }
 });
 
-// 刪除活動
+router.patch('/activities/:id', authMiddleware, async (req: any, res: Response) => {
+  try {
+    const { title, location, startTime, note } = req.body;
+    const activity = await prisma.activity.update({
+      where: { id: req.params.id },
+      data: {
+        ...(title && { title }),
+        location: location ?? undefined,
+        startTime: startTime ?? undefined,
+        note: note ?? undefined,
+      },
+    });
+    res.json(activity);
+  } catch {
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+});
+
 router.delete('/activities/:id', authMiddleware, async (req: any, res: Response) => {
   try {
     await prisma.activity.delete({ where: { id: req.params.id } });
