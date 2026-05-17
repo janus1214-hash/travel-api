@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgres://e77af2969ec6b430c3e2647ee6d54e264d216d444dadf07d1a5cc4145a9e479a:sk_eQCHe7i7Cgk1UutdaBixM@db.prisma.io:5432/postgres?sslmode=require"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -14,6 +14,7 @@ model User {
   password    String
   createdAt   DateTime @default(now())
   trips       TripMember[]
+  expenses    Expense[]
 }
 
 model Trip {
@@ -28,6 +29,7 @@ model Trip {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   members     TripMember[]
+  expenses    Expense[]
 }
 
 model TripMember {
@@ -39,4 +41,26 @@ model TripMember {
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([tripId, userId])
+}
+
+model Expense {
+  id          String         @id @default(uuid())
+  tripId      String
+  title       String
+  amount      Float
+  category    String         @default("other")
+  paidById    String
+  createdAt   DateTime       @default(now())
+  trip        Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  paidBy      User           @relation(fields: [paidById], references: [id])
+  splits      ExpenseSplit[]
+}
+
+model ExpenseSplit {
+  id         String   @id @default(uuid())
+  expenseId  String
+  userId     String
+  share      Float
+  isPaid     Boolean  @default(false)
+  expense    Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
 }
