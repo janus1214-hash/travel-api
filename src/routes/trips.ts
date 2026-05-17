@@ -100,6 +100,23 @@ router.patch('/:id/status', authMiddleware, async (req: any, res: Response) => {
   }
 });
 
+router.delete('/:id', authMiddleware, async (req: any, res: Response) => {
+  try {
+    const tripId = req.params.id;
+
+    const member = await prisma.tripMember.findFirst({
+      where: { tripId, userId: req.userId, role: 'owner' },
+    });
+    if (!member) return res.status(403).json({ error: '只有建立者可以刪除行程' });
+
+    await prisma.trip.delete({ where: { id: tripId } });
+
+    res.json({ message: '行程已刪除' });
+  } catch {
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+});
+
 router.post('/:id/invite', authMiddleware, async (req: any, res: Response) => {
   try {
     const { email } = req.body;
