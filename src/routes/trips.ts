@@ -74,6 +74,32 @@ router.get('/:id', authMiddleware, async (req: any, res: Response) => {
   }
 });
 
+router.patch('/:id/status', authMiddleware, async (req: any, res: Response) => {
+  try {
+    const { status } = req.body;
+    const tripId = req.params.id;
+
+    const validStatuses = ['draft', 'planning', 'confirmed', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: '無效的狀態' });
+    }
+
+    const member = await prisma.tripMember.findFirst({
+      where: { tripId, userId: req.userId },
+    });
+    if (!member) return res.status(403).json({ error: '你不是此行程的成員' });
+
+    const trip = await prisma.trip.update({
+      where: { id: tripId },
+      data: { status },
+    });
+
+    res.json(trip);
+  } catch {
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+});
+
 router.post('/:id/invite', authMiddleware, async (req: any, res: Response) => {
   try {
     const { email } = req.body;
