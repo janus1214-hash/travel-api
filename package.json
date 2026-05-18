@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "echo 'skip build'",
-    "start": "ts-node src/index.ts"
+    "start": "ts-node src/index.ts",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
