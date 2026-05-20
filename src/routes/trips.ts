@@ -173,4 +173,29 @@ router.post('/:id/invite', authMiddleware, async (req: any, res: Response) => {
   }
 });
 
+router.delete('/:id/members/:userId', authMiddleware, async (req: any, res: Response) => {
+  try {
+    const { id: tripId, userId } = req.params;
+
+    const requester = await prisma.tripMember.findFirst({
+      where: { tripId, userId: req.userId },
+    });
+    if (!requester || requester.role !== 'owner') {
+      return res.status(403).json({ error: '只有建立者可以移除成員' });
+    }
+
+    if (userId === req.userId) {
+      return res.status(400).json({ error: '不能移除自己' });
+    }
+
+    await prisma.tripMember.deleteMany({
+      where: { tripId, userId },
+    });
+
+    res.json({ message: '成員已移除' });
+  } catch {
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+});
+
 export default router;
