@@ -33,7 +33,7 @@ router.get('/', authMiddleware, async (req: any, res: Response) => {
 
 router.post('/', authMiddleware, async (req: any, res: Response) => {
   try {
-    const { title, destination, startDate, endDate, status, coverImage } = req.body;
+    const { title, destination, startDate, endDate, status, coverImage, note } = req.body;
 
     if (!title || !startDate || !endDate) {
       return res.status(400).json({ error: '請填寫必要欄位' });
@@ -47,6 +47,7 @@ router.post('/', authMiddleware, async (req: any, res: Response) => {
         endDate: new Date(endDate),
         status: status ?? 'draft',
         coverImage: coverImage ?? null,
+        note: note ?? null,
         createdBy: req.userId,
         members: {
           create: { userId: req.userId, role: 'owner' },
@@ -77,7 +78,7 @@ router.get('/:id', authMiddleware, async (req: any, res: Response) => {
 
 router.patch('/:id', authMiddleware, async (req: any, res: Response) => {
   try {
-    const { title, destination, startDate, endDate, coverImage } = req.body;
+    const { title, destination, startDate, endDate, coverImage, note } = req.body;
     const tripId = req.params.id;
 
     const member = await prisma.tripMember.findFirst({
@@ -93,6 +94,7 @@ router.patch('/:id', authMiddleware, async (req: any, res: Response) => {
         ...(startDate && { startDate: new Date(startDate) }),
         ...(endDate && { endDate: new Date(endDate) }),
         ...(coverImage !== undefined && { coverImage }),
+        ...(note !== undefined && { note }),
       },
     });
 
