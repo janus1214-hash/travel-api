@@ -23,9 +23,7 @@ router.get('/:tripId', authMiddleware, async (req: any, res: Response) => {
     const polls = await prisma.poll.findMany({
       where: { tripId: req.params.tripId },
       include: {
-        options: {
-          include: { votes: true },
-        },
+        options: { include: { votes: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -65,24 +63,34 @@ router.post('/:tripId', authMiddleware, async (req: any, res: Response) => {
   }
 });
 
+router.delete('/:pollId', authMiddleware, async (req: any, res: Response) => {
+  try {
+    const poll = await prisma.poll.findUnique({
+      where: { id: req.params.pollId },
+    });
+
+    if (!poll) return res.status(404).json({ error: '找不到投票' });
+    if (poll.createdBy !== req.userId) {
+      return res.status(403).json({ error: '只有建立者可以刪除' });
+    }
+
+    await prisma.poll.delete({ where: { id: req.params.pollId } });
+    res.json({ message: '已刪除' });
+  } catch {
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+});
+
 router.post('/vote/:optionId', authMiddleware, async (req: any, res: Response) => {
   try {
     const existing = await prisma.pollVote.findFirst({
-      where: {
-        pollOptionId: req.params.optionId,
-        userId: req.userId,
-      },
+      where: { pollOptionId: req.params.optionId, userId: req.userId },
     });
 
-    if (existing) {
-      return res.status(400).json({ error: '你已經投過票了' });
-    }
+    if (existing) return res.status(400).json({ error: '你已經投過票了' });
 
     const vote = await prisma.pollVote.create({
-      data: {
-        pollOptionId: req.params.optionId,
-        userId: req.userId,
-      },
+      data: { pollOptionId: req.params.optionId, userId: req.userId },
     });
 
     res.json(vote);
