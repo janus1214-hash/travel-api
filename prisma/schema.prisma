@@ -26,6 +26,7 @@ model Trip {
   endDate     DateTime
   status      String       @default("draft")
   currency    String       @default("TWD")
+  coverImage  String?
   createdBy   String
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
